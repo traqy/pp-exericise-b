@@ -150,30 +150,30 @@ public class AmortizationSchedule {
 		}
 	}
 	
-	public static boolean isValidBorrowAmount(double amount) {
+	private static boolean isValidBorrowAmount(double amount) {
 		double range[] = getBorrowAmountRange();
 		return ((range[0] <= amount) && (amount <= range[1]));
 	}
 	
-	public static boolean isValidAPRValue(double rate) {
+	private static boolean isValidAPRValue(double rate) {
 		double range[] = getAPRRange();
 		return ((range[0] <= rate) && (rate <= range[1]));
 	}
 	
-	public static boolean isValidTerm(int years) {
+	private static boolean isValidTerm(int years) {
 		int range[] = getTermRange();
 		return ((range[0] <= years) && (years <= range[1]));
 	}
 	
-	public static final double[] getBorrowAmountRange() {
+	private static final double[] getBorrowAmountRange() {
 		return borrowAmountRange;
 	}
 	
-	public static final double[] getAPRRange() {
+	private static final double[] getAPRRange() {
 		return aprRange;
 	}
 
-	public static final int[] getTermRange() {
+	private static final int[] getTermRange() {
 		return termRange;
 	}
 	
