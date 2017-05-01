@@ -8,11 +8,14 @@ import java.io.IOException;
 import java.lang.NumberFormatException;
 import java.util.IllegalFormatException;
 import java.lang.IllegalArgumentException;
+import java.util.ArrayList;
 
 public class AmortizationSchedule {
 
 	private static Console console = System.console();
 
+	private ArrayList<AmortizationPayment> paymentSchedules  = new ArrayList<AmortizationPayment>();
+	
 	private long amountBorrowed = 0;		// in cents
 	private double apr = 0d;
 	private int initialTermMonths = 0;
@@ -24,6 +27,37 @@ public class AmortizationSchedule {
 	private static final double[] borrowAmountRange = new double[] { 0.01d, 1000000000000d };
 	private static final double[] aprRange = new double[] { 0.000001d, 100d };
 	private static final int[] termRange = new int[] { 1, 1000000 };
+	
+	// The output should include:
+	//	The first column identifies the payment number.
+	//	The second column contains the amount of the payment.
+	//	The third column shows the amount paid to interest.
+	//	The fourth column has the current balance.  The total payment amount and the interest paid fields.
+	
+	public AmortizationSchedule(double amount, double interestRate, int years) throws IllegalArgumentException {
+
+		if ((isValidBorrowAmount(amount) == false) ||
+				(isValidAPRValue(interestRate) == false) ||
+				(isValidTerm(years) == false)) {
+			throw new IllegalArgumentException();
+		}
+
+		amountBorrowed = Math.round(amount * 100);
+		apr = interestRate;
+		initialTermMonths = years * 12;
+		
+		monthlyPaymentAmount = calculateMonthlyPayment();
+		
+		calculateAmortizationSchedule();
+		
+		// the following shouldn't happen with the available valid ranges
+		// for borrow amount, apr, and term; however, without range validation,
+		// monthlyPaymentAmount as calculated by calculateMonthlyPayment()
+		// may yield incorrect values with extreme input values
+		if (monthlyPaymentAmount > amountBorrowed) {
+			throw new IllegalArgumentException();
+		}
+	}
 	
 	private long calculateMonthlyPayment() {
 		// M = P * (J / (1 - (Math.pow(1/(1 + J), N))));
@@ -53,13 +87,9 @@ public class AmortizationSchedule {
 		
 		return Math.round(rc);
 	}
+
 	
-	// The output should include:
-	//	The first column identifies the payment number.
-	//	The second column contains the amount of the payment.
-	//	The third column shows the amount paid to interest.
-	//	The fourth column has the current balance.  The total payment amount and the interest paid fields.
-	public void outputAmortizationSchedule() {
+	private void calculateAmortizationSchedule() {
 		// 
 		// To create the amortization table, create a loop in your program and follow these steps:
 		// 1.      Calculate H = P x J, this is your current monthly interest
@@ -68,22 +98,14 @@ public class AmortizationSchedule {
 		// 4.      Set P equal to Q and go back to Step 1: You thusly loop around until the value Q (and hence P) goes to zero.
 		// 
 
-		String formatString = "%1$-20s%2$-20s%3$-20s%4$s,%5$s,%6$s\n";
-		printf(formatString,
-				"PaymentNumber", "PaymentAmount", "PaymentInterest",
-				"CurrentBalance", "TotalPayments", "TotalInterestPaid");
 		
 		long balance = amountBorrowed;
 		int paymentNumber = 0;
 		long totalPayments = 0;
 		long totalInterestPaid = 0;
-		
-		// output is in dollars
-		formatString = "%1$-20d%2$-20.2f%3$-20.2f%4$.2f,%5$.2f,%6$.2f\n";
-		printf(formatString, paymentNumber++, 0d, 0d,
-				((double) amountBorrowed) / 100d,
-				((double) totalPayments) / 100d,
-				((double) totalInterestPaid) / 100d);
+
+		AmortizationPayment borrow = new AmortizationPayment(paymentNumber, 0, 0, amountBorrowed, totalPayments, totalInterestPaid);
+		paymentSchedules.add(borrow);
 		
 		final int maxNumberOfPayments = initialTermMonths + 1;
 		while ((balance > 0) && (paymentNumber <= maxNumberOfPayments)) {
@@ -114,39 +136,41 @@ public class AmortizationSchedule {
 			totalPayments += curMonthlyPaymentAmount;
 			totalInterestPaid += curMonthlyInterest;
 			
-			// output is in dollars
-			printf(formatString, paymentNumber++,
-					((double) curMonthlyPaymentAmount) / 100d,
-					((double) curMonthlyInterest) / 100d,
-					((double) curBalance) / 100d,
-					((double) totalPayments) / 100d,
-					((double) totalInterestPaid) / 100d);
-						
-			// Set P equal to Q and go back to Step 1: You thusly loop around until the value Q (and hence P) goes to zero.
+			// Store the payment information data to ArrayList of AmortizationPayment objects
+			AmortizationPayment payment = new AmortizationPayment(paymentNumber, curMonthlyPaymentAmount, curMonthlyInterest, curBalance, totalPayments, totalInterestPaid);
+			
+			paymentSchedules.add(payment);
+			
 			balance = curBalance;
 		}
 	}
 	
-	public AmortizationSchedule(double amount, double interestRate, int years) throws IllegalArgumentException {
-
-		if ((isValidBorrowAmount(amount) == false) ||
-				(isValidAPRValue(interestRate) == false) ||
-				(isValidTerm(years) == false)) {
-			throw new IllegalArgumentException();
-		}
-
-		amountBorrowed = Math.round(amount * 100);
-		apr = interestRate;
-		initialTermMonths = years * 12;
+	public ArrayList<AmortizationPayment> getAmortizationPaymentSchedule() {
+		return this.paymentSchedules;
+	}
+	
+	public void printAS(){
 		
-		monthlyPaymentAmount = calculateMonthlyPayment();
+		String formatString = "%1$-20s%2$-20s%3$-20s%4$s,%5$s,%6$s\n";
+		printf(formatString,
+				"PaymentNumber", "PaymentAmount", "PaymentInterest",
+				"CurrentBalance", "TotalPayments", "TotalInterestPaid");
+
+		for (AmortizationPayment ap: paymentSchedules ){
+			int paymentNumber = ap.getPaymentNumber();
+			long paymentAmount = ap.getMonthlyPaymentAmount();
+			long paymentInterest = ap.getMonthlyInterest();
+			long currentBalance = ap.getBalance();
+			long totalPayments = ap.getTotalPayment();
+			long totalInterestPaid = ap.getTotalInterestPaid();
 		
-		// the following shouldn't happen with the available valid ranges
-		// for borrow amount, apr, and term; however, without range validation,
-		// monthlyPaymentAmount as calculated by calculateMonthlyPayment()
-		// may yield incorrect values with extreme input values
-		if (monthlyPaymentAmount > amountBorrowed) {
-			throw new IllegalArgumentException();
+			// output is in dollars
+			printf(formatString, paymentNumber,
+					((double) paymentAmount) / 100d,
+					((double) paymentInterest) / 100d,
+					((double) currentBalance) / 100d,
+					((double) totalPayments) / 100d,
+					((double) totalInterestPaid) / 100d);
 		}
 	}
 	
@@ -273,9 +297,60 @@ public class AmortizationSchedule {
 		
 		try {
 			AmortizationSchedule as = new AmortizationSchedule(amount, apr, years);
-			as.outputAmortizationSchedule();
+			//as.outputAmortizationSchedule();
+			as.printAS();
+			
 		} catch (IllegalArgumentException e) {
 			print("Unable to process the values entered. Terminating program.\n");
 		}
 	}
 }
+
+class AmortizationPayment {
+	
+	private int paymentNumber;
+	private long monthlyPaymentAmount;
+	private long monthlyInterest;
+	private long balance;
+	private long totalPayment;
+	private long totalInterestPaid;
+	
+	// Store the payment information data to ArrayList of HashMap
+	//    Payment Number, Monthly Payment Amount, Monthly Interest Balance, Total Payments, TotalInterestPaid
+
+	AmortizationPayment( int paymentNumber, long monthlyPaymentAmount, long monthlyInterest, long balance, long totalPayments, long totalInterestPaid) {
+		try {
+			// TODO validation
+			this.paymentNumber = paymentNumber;
+			this.monthlyPaymentAmount = monthlyPaymentAmount;
+			this.monthlyInterest = monthlyInterest;
+			this.balance = balance;
+			this.totalPayment = totalPayments;
+			this.totalInterestPaid = totalInterestPaid;
+			
+		}
+		catch (Exception e){
+			
+		}
+	}
+	
+	public int getPaymentNumber() {
+		return paymentNumber;
+	}
+	public long getMonthlyPaymentAmount() {
+		return this.monthlyPaymentAmount;
+	}
+	public long getMonthlyInterest() {
+		return this.monthlyInterest;
+	}
+	public long getBalance() {
+		return this.balance;
+	}
+	public long getTotalPayment() {
+		return this.totalPayment;
+	}
+	public long getTotalInterestPaid() {
+		return this.totalInterestPaid;
+	}
+}
+
