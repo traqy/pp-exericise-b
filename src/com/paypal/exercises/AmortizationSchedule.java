@@ -199,15 +199,15 @@ public class AmortizationSchedule {
 		return ((range[0] <= years) && (years <= range[1]));
 	}
 	
-	private static final double[] getBorrowAmountRange() {
+	public static final double[] getBorrowAmountRange() {
 		return BORROW_AMOUNT_RANGE;
 	}
 	
-	private static final double[] getAPRRange() {
+	public static final double[] getAPRRange() {
 		return ANNUAL_PERCENTAGE_RATE;
 	}
 
-	private static final int[] getTermRange() {
+	public static final int[] getTermRange() {
 		return TERM_RANGE;
 	}
 	
