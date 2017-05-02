@@ -1,36 +1,37 @@
 package com.paypal.exercises;
 
-import java.io.Console;
 import java.lang.Math;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.NumberFormatException;
-import java.util.IllegalFormatException;
 import java.lang.IllegalArgumentException;
 import java.util.ArrayList;
 
 public class AmortizationSchedule {
 
-	private static String INPUT_AMOUNT_TO_BORROW_PROMPT = "Please enter the amount you would like to borrow: ";
-	private static String INPUT_ANNUAL_PERCENTAGE_RATE_PROMPT = "Please enter the annual percentage rate used to repay the loan: ";
-	private static String INPUT_TERM_PROMPT = "Please enter the term, in years, over which the loan is repaid: "; 
 		
-	private static Console CONSOLE = System.console();
-
 	private ArrayList<AmortizationPayment> paymentSchedules  = new ArrayList<AmortizationPayment>();
 	
 	private long amountBorrowed = 0;		// in cents
 	private double apr = 0d;
 	private int initialTermMonths = 0;
 	
-	private final double monthlyInterestDivisor = 12d * 100d;
+	private final static double NUMBER_OF_MONTHS_A_YEAR = 12d;
+	private final static double MONTHLY_INTEREST_DIVISOR = NUMBER_OF_MONTHS_A_YEAR * 100d;
 	private double monthlyInterest = 0d;
 	private long monthlyPaymentAmount = 0;	// in cents
 
 	private static final double[] BORROW_AMOUNT_RANGE = new double[] { 0.01d, 1000000000000d };
 	private static final double[] ANNUAL_PERCENTAGE_RATE = new double[] { 0.000001d, 100d };
 	private static final int[] TERM_RANGE = new int[] { 1, 1000000 };
+	
+
+	private static String INPUT_AMOUNT_TO_BORROW_PROMPT = "Please enter the amount you would like to borrow: ";
+	private static String INPUT_ANNUAL_PERCENTAGE_RATE_PROMPT = "Please enter the annual percentage rate used to repay the loan: ";
+	private static String INPUT_TERM_PROMPT = "Please enter the term, in years, over which the loan is repaid: "; 
+
+	private static final String INVALID_BORROW_AMOUNT_MSG = "Invalid argument value for borrow amount.";
+	private static final String INVALID_INTEREST_RATE_MSG = "Invalid argument value for interest rate.";
+	private static final String INVALID_TERM_YEARS = "Invalid argument value for term years";
 	
 	// The output should include:
 	//	The first column identifies the payment number.
@@ -40,11 +41,16 @@ public class AmortizationSchedule {
 	
 	public AmortizationSchedule(double amount, double interestRate, int years) throws IllegalArgumentException {
 
-		if ((isValidBorrowAmount(amount) == false) ||
-				(isValidAPRValue(interestRate) == false) ||
-				(isValidTerm(years) == false)) {
-			throw new IllegalArgumentException();
+		if ( !isValidBorrowAmount(amount) ) {
+			throw new IllegalArgumentException(INVALID_BORROW_AMOUNT_MSG);
 		}
+		if ( !isValidAPRValue(interestRate) ) {
+			throw new IllegalArgumentException(INVALID_INTEREST_RATE_MSG);
+		}
+		if (!isValidTerm(years)) {
+			throw new IllegalArgumentException(INVALID_TERM_YEARS);			
+		}
+		
 
 		amountBorrowed = Math.round(amount * 100);
 		apr = interestRate;
@@ -77,7 +83,7 @@ public class AmortizationSchedule {
 		// 
 		
 		// calculate J
-		monthlyInterest = apr / monthlyInterestDivisor;
+		monthlyInterest = apr / MONTHLY_INTEREST_DIVISOR;
 		
 		// this is 1 / (1 + J)
 		double tmp = Math.pow(1d + monthlyInterest, -1);
@@ -162,7 +168,7 @@ public class AmortizationSchedule {
 	public void consoleOutput(){
 		
 		String formatString = "%1$-20s%2$-20s%3$-20s%4$s,%5$s,%6$s\n";
-		printf(formatString,
+		Utils.printf(formatString,
 				"PaymentNumber", "PaymentAmount", "PaymentInterest",
 				"CurrentBalance", "TotalPayments", "TotalInterestPaid");
 
@@ -175,7 +181,7 @@ public class AmortizationSchedule {
 			long totalInterestPaid = ap.getTotalInterestPaid();
 		
 			// output is in dollars
-			printf(formatString, paymentNumber,
+			Utils.printf(formatString, paymentNumber,
 					((double) paymentAmount) / 100d,
 					((double) paymentInterest) / 100d,
 					((double) currentBalance) / 100d,
@@ -260,38 +266,7 @@ public class AmortizationSchedule {
 		return TERM_RANGE;
 	}
 	
-	private static void printf(String formatString, Object... args) {
-		
-		try {
-			if (CONSOLE != null) {
-				CONSOLE.printf(formatString, args);
-			} else {
-				System.out.print(String.format(formatString, args));
-			}
-		} catch (IllegalFormatException e) {
-			System.err.print("Error printing...\n");
-		}
-	}
-	
-	private static void print(String s) {
-		printf("%s", s);
-	}
-	
-	private static String readLine(String userPrompt) throws IOException {
-		String line = "";
-		
-		if (CONSOLE != null) {
-			line = CONSOLE.readLine(userPrompt);
-		} else {
-			// print("console is null\n");
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
-			print(userPrompt);
-			line = bufferedReader.readLine();
-		}
-		line.trim();
-		return line;
-	}
 	
 	private static double inputAmountToBorrow() throws IOException, Exception{
 		
@@ -299,18 +274,18 @@ public class AmortizationSchedule {
 		double retval_amount = 0;
 		try {
 			do {
-				String amount = readLine( INPUT_AMOUNT_TO_BORROW_PROMPT );
+				String amount = Utils.readLine( INPUT_AMOUNT_TO_BORROW_PROMPT );
 
-				if (isValidBorrowAmount(amount) == false) {
+				if ( ! isValidBorrowAmount(amount) ) {
 						isValidAmount = false;
 						double range[] = getBorrowAmountRange();
-						print("Please enter a positive value between " + range[0] + " and " + range[1] + ". ");
+						Utils.print("Please enter a positive value between " + range[0] + " and " + range[1] + ". ");
 				}
 				else {
 					retval_amount = Double.parseDouble(amount);
 					isValidAmount = true;
 				}
-			} while (isValidAmount == false);
+			} while (!isValidAmount);
 		}
 		catch ( IOException e) {
 			throw e;
@@ -326,18 +301,18 @@ public class AmortizationSchedule {
 		double retval_apr = 0;
 		try {
 			do {
-				String apr = readLine( INPUT_ANNUAL_PERCENTAGE_RATE_PROMPT );
+				String apr = Utils.readLine( INPUT_ANNUAL_PERCENTAGE_RATE_PROMPT );
 				
-				if (isValidAPRValue(apr) == false) {
+				if ( !isValidAPRValue(apr) ) {
 					isValidAPR = false;
 					double range[] = getBorrowAmountRange();
-					print("Please enter a positive value between " + range[0] + " and " + range[1] + ". ");
+					Utils.print("Please enter a positive value between " + range[0] + " and " + range[1] + ". ");
 				}
 				else {
 					retval_apr = Double.parseDouble(apr);
 					isValidAPR = true;
 				}
-			} while (isValidAPR == false);
+			} while (!isValidAPR);
 		}
 		catch ( IOException e) {
 			throw e;
@@ -354,12 +329,12 @@ public class AmortizationSchedule {
 		int retval_term_years = 0;
 		try {
 			do {
-				String line = readLine( INPUT_TERM_PROMPT );
+				String line = Utils.readLine( INPUT_TERM_PROMPT );
 				
-				if (isValidTerm(line) == false) {
+				if ( ! isValidTerm(line) ) {
 					isValidTermYears = false;
 					int range[] = getTermRange();
-					print("Please enter a positive integer value between " + range[0] + " and " + range[1] + ". ");
+					Utils.print("Please enter a positive integer value between " + range[0] + " and " + range[1] + ". ");
 				}
 				else {
 					retval_term_years = Integer.parseInt(line);
@@ -394,14 +369,14 @@ public class AmortizationSchedule {
 			
 		}
 		catch (IllegalArgumentException e) {
-			print("An IllegalArgumentException was encountered. Terminating program.\n");
+			Utils.print("An IllegalArgumentException was encountered. Terminating program.\n");
 		}
 		catch (IOException e) {
-			print("An IOException was encountered. Terminating program.\n");
+			Utils.print("An IOException was encountered. Terminating program.\n");
 			return;
 		}		
 		catch (Exception e) {
-			print("An exception error is encountered. Terminating program.\n");
+			Utils.print("An exception error is encountered. Terminating program.\n");
 			return;
 		}
 	}
