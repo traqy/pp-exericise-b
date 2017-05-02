@@ -7,12 +7,11 @@ import java.lang.IllegalArgumentException;
 import java.util.ArrayList;
 
 public class AmortizationSchedule {
-
 		
 	private ArrayList<AmortizationPayment> paymentSchedules  = new ArrayList<AmortizationPayment>();
 	
 	private long amountBorrowed = 0;		// in cents
-	private double apr = 0d;
+	private double annualPercentageRate = 0d;
 	private int initialTermMonths = 0;
 	
 	private final static double NUMBER_OF_MONTHS_A_YEAR = 12d;
@@ -24,11 +23,6 @@ public class AmortizationSchedule {
 	private static final double[] ANNUAL_PERCENTAGE_RATE = new double[] { 0.000001d, 100d };
 	private static final int[] TERM_RANGE = new int[] { 1, 1000000 };
 	
-
-	private static String INPUT_AMOUNT_TO_BORROW_PROMPT = "Please enter the amount you would like to borrow: ";
-	private static String INPUT_ANNUAL_PERCENTAGE_RATE_PROMPT = "Please enter the annual percentage rate used to repay the loan: ";
-	private static String INPUT_TERM_PROMPT = "Please enter the term, in years, over which the loan is repaid: "; 
-
 	private static final String INVALID_BORROW_AMOUNT_MSG = "Invalid argument value for borrow amount.";
 	private static final String INVALID_INTEREST_RATE_MSG = "Invalid argument value for interest rate.";
 	private static final String INVALID_TERM_YEARS = "Invalid argument value for term years";
@@ -53,7 +47,7 @@ public class AmortizationSchedule {
 		
 
 		amountBorrowed = Math.round(amount * 100);
-		apr = interestRate;
+		annualPercentageRate = interestRate;
 		initialTermMonths = years * 12;
 		
 		monthlyPaymentAmount = calculateMonthlyPayment();
@@ -83,7 +77,7 @@ public class AmortizationSchedule {
 		// 
 		
 		// calculate J
-		monthlyInterest = apr / MONTHLY_INTEREST_DIVISOR;
+		monthlyInterest = annualPercentageRate / MONTHLY_INTEREST_DIVISOR;
 		
 		// this is 1 / (1 + J)
 		double tmp = Math.pow(1d + monthlyInterest, -1);
@@ -190,66 +184,17 @@ public class AmortizationSchedule {
 		}
 	}
 	
-	private static boolean isValidBorrowAmount(String strAmount) {
-		try
-		{
-			double amount = Double.parseDouble(strAmount);
-			double range[] = getBorrowAmountRange();
-			return ((range[0] <= amount) && (amount <= range[1]));
-		}
-		catch(NumberFormatException e)
-		{
-		  return false;
-		}
-		catch(Exception e){
-			return false;
-		}
-
-	}
-
-	private static boolean isValidBorrowAmount(double amount) {
+	public static boolean isValidBorrowAmount(double amount) {
 		double range[] = getBorrowAmountRange();
 		return ((range[0] <= amount) && (amount <= range[1]));
 	}
 	
-	private static boolean isValidAPRValue(double rate) {
+	public static boolean isValidAPRValue(double rate) {
 		double range[] = getAPRRange();
 		return ((range[0] <= rate) && (rate <= range[1]));
 	}
-
-	private static boolean isValidAPRValue(String strRate) {
-
-		try
-		{
-			double rate = Double.parseDouble(strRate);
-			double range[] = getAPRRange();
-			return ((range[0] <= rate) && (rate <= range[1]));
-		}
-		catch(NumberFormatException e)
-		{
-		  return false;
-		}
-		catch(Exception e){
-			return false;
-		}
-
-		
-	}
-
-	private static boolean isValidTerm(String strYears) {
-		try {
-			int years = Integer.parseInt(strYears);
-			int range[] = getTermRange();
-			return ((range[0] <= years) && (years <= range[1]));
-		}
-		catch (NumberFormatException e){
-			return false;
-		}
-		catch (Exception e){
-			return false;
-		}
-	}
-	private static boolean isValidTerm(int years) {
+	
+	public static boolean isValidTerm(int years) {
 		int range[] = getTermRange();
 		return ((range[0] <= years) && (years <= range[1]));
 	}
@@ -266,167 +211,119 @@ public class AmortizationSchedule {
 		return TERM_RANGE;
 	}
 	
-
-	
-	private static double inputAmountToBorrow() throws IOException, Exception{
+	class AmortizationPayment {
 		
-		boolean isValidAmount = true;
-		double retval_amount = 0;
-		try {
-			do {
-				String amount = Utils.readLine( INPUT_AMOUNT_TO_BORROW_PROMPT );
+		private int paymentNumber;
+		private long monthlyPaymentAmount;
+		private long monthlyInterest;
+		private long balance;
+		private long totalPayment;
+		private long totalInterestPaid;
+		
+		// Store the payment information data to ArrayList of HashMap
+		//    Payment Number, Monthly Payment Amount, Monthly Interest Balance, Total Payments, TotalInterestPaid
 
-				if ( ! isValidBorrowAmount(amount) ) {
-						isValidAmount = false;
+		AmortizationPayment( int paymentNumber, long monthlyPaymentAmount, long monthlyInterest, long balance, long totalPayments, long totalInterestPaid) {
+			try {
+				// TODO validation
+				this.paymentNumber = paymentNumber;
+				this.monthlyPaymentAmount = monthlyPaymentAmount;
+				this.monthlyInterest = monthlyInterest;
+				this.balance = balance;
+				this.totalPayment = totalPayments;
+				this.totalInterestPaid = totalInterestPaid;
+				
+			}
+			catch (Exception e){
+			}
+		}
+		
+		public int getPaymentNumber() {
+			return paymentNumber;
+		}
+		public long getMonthlyPaymentAmount() {
+			return this.monthlyPaymentAmount;
+		}
+		public long getMonthlyInterest() {
+			return this.monthlyInterest;
+		}
+		public long getBalance() {
+			return this.balance;
+		}
+		public long getTotalPayment() {
+			return this.totalPayment;
+		}
+		public long getTotalInterestPaid() {
+			return this.totalInterestPaid;
+		}
+	}
+
+	public static void main(String [] args) {
+		String[] userPrompts = {
+				"Please enter the amount you would like to borrow: ",
+				"Please enter the annual percentage rate used to repay the loan: ",
+				"Please enter the term, in years, over which the loan is repaid: "
+		};
+		
+		String line = "";
+		double amount = 0;
+		double apr = 0;
+		int years = 0;
+		
+		for (int i = 0; i< userPrompts.length; ) {
+			String userPrompt = userPrompts[i];
+			try {
+				line = Utils.readLine(userPrompt);
+			} catch (IOException e) {
+				Utils.print("An IOException was encountered. Terminating program.\n");
+				return;
+			}
+			
+			boolean isValidValue = true;
+			try {
+				switch (i) {
+				case 0:
+					amount = Double.parseDouble(line);
+					if (isValidBorrowAmount(amount) == false) {
+						isValidValue = false;
 						double range[] = getBorrowAmountRange();
 						Utils.print("Please enter a positive value between " + range[0] + " and " + range[1] + ". ");
+					}
+					break;
+				case 1:
+					apr = Double.parseDouble(line);
+					if (isValidAPRValue(apr) == false) {
+						isValidValue = false;
+						double range[] = getAPRRange();
+						Utils.print("Please enter a positive value between " + range[0] + " and " + range[1] + ". ");
+					}
+					break;
+				case 2:
+					years = Integer.parseInt(line);
+					if (isValidTerm(years) == false) {
+						isValidValue = false;
+						int range[] = getTermRange();
+						Utils.print("Please enter a positive integer value between " + range[0] + " and " + range[1] + ". ");
+					}
+					break;
 				}
-				else {
-					retval_amount = Double.parseDouble(amount);
-					isValidAmount = true;
-				}
-			} while (!isValidAmount);
+			} catch (NumberFormatException e) {
+				isValidValue = false;
+			}
+			if (isValidValue) {
+				i++;
+			} else {
+				Utils.print("An invalid value was entered.\n");
+			}
 		}
-		catch ( IOException e) {
-			throw e;
-		}
-		catch (Exception e) {
-			throw e;
-		}
-		return retval_amount;
-	}
-	
-	private static double inputAPR() throws IOException, Exception {
-		boolean isValidAPR = true;
-		double retval_apr = 0;
 		try {
-			do {
-				String apr = Utils.readLine( INPUT_ANNUAL_PERCENTAGE_RATE_PROMPT );
-				
-				if ( !isValidAPRValue(apr) ) {
-					isValidAPR = false;
-					double range[] = getBorrowAmountRange();
-					Utils.print("Please enter a positive value between " + range[0] + " and " + range[1] + ". ");
-				}
-				else {
-					retval_apr = Double.parseDouble(apr);
-					isValidAPR = true;
-				}
-			} while (!isValidAPR);
-		}
-		catch ( IOException e) {
-			throw e;
-		}
-		catch (Exception e) {
-			throw e;
-		}
-		return retval_apr;
-	}
-	
-	private static int inputTermYears() throws IOException, Exception {
-		
-		boolean isValidTermYears = true;
-		int retval_term_years = 0;
-		try {
-			do {
-				String line = Utils.readLine( INPUT_TERM_PROMPT );
-				
-				if ( ! isValidTerm(line) ) {
-					isValidTermYears = false;
-					int range[] = getTermRange();
-					Utils.print("Please enter a positive integer value between " + range[0] + " and " + range[1] + ". ");
-				}
-				else {
-					retval_term_years = Integer.parseInt(line);
-					isValidTermYears = true;
-				}
-			} while (isValidTermYears == false);
-		}
-		catch ( IOException e) {
-			throw e;
-		}
-		catch (Exception e) {
-			throw e;
-		}
-		
-		return retval_term_years;
-	}
-	
-	public static void main(String [] args) {
-		
-		try {
-			double amount = inputAmountToBorrow();
-			//System.out.format("Amount: %.2f %n" ,  amount);
-
-			double apr = inputAPR();
-			//System.out.format("APR: %.2f %n" ,  apr);
-			
-			int years = inputTermYears();
-			//System.out.format("Term Years: %2d %n" ,  years);
-
 			AmortizationSchedule as = new AmortizationSchedule(amount, apr, years);
-			as.consoleOutput();
-			
+			as.consoleOutput();;
+		} catch (IllegalArgumentException e) {
+			Utils.print("Unable to process the values entered.");
+			Utils.print(e.getMessage());
+			Utils.print("Terminating program.\n");
 		}
-		catch (IllegalArgumentException e) {
-			Utils.print("An IllegalArgumentException was encountered. Terminating program.\n");
-		}
-		catch (IOException e) {
-			Utils.print("An IOException was encountered. Terminating program.\n");
-			return;
-		}		
-		catch (Exception e) {
-			Utils.print("An exception error is encountered. Terminating program.\n");
-			return;
-		}
-	}
-}
-
-class AmortizationPayment {
-	
-	private int paymentNumber;
-	private long monthlyPaymentAmount;
-	private long monthlyInterest;
-	private long balance;
-	private long totalPayment;
-	private long totalInterestPaid;
-	
-	// Store the payment information data to ArrayList of HashMap
-	//    Payment Number, Monthly Payment Amount, Monthly Interest Balance, Total Payments, TotalInterestPaid
-
-	AmortizationPayment( int paymentNumber, long monthlyPaymentAmount, long monthlyInterest, long balance, long totalPayments, long totalInterestPaid) {
-		try {
-			// TODO validation
-			this.paymentNumber = paymentNumber;
-			this.monthlyPaymentAmount = monthlyPaymentAmount;
-			this.monthlyInterest = monthlyInterest;
-			this.balance = balance;
-			this.totalPayment = totalPayments;
-			this.totalInterestPaid = totalInterestPaid;
-			
-		}
-		catch (Exception e){
-			
-		}
-	}
-	
-	public int getPaymentNumber() {
-		return paymentNumber;
-	}
-	public long getMonthlyPaymentAmount() {
-		return this.monthlyPaymentAmount;
-	}
-	public long getMonthlyInterest() {
-		return this.monthlyInterest;
-	}
-	public long getBalance() {
-		return this.balance;
-	}
-	public long getTotalPayment() {
-		return this.totalPayment;
-	}
-	public long getTotalInterestPaid() {
-		return this.totalInterestPaid;
 	}
 }
 
