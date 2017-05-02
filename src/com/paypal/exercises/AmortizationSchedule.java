@@ -12,11 +12,11 @@ import java.util.ArrayList;
 
 public class AmortizationSchedule {
 
-	private static String inputAmountToBorrowPrompt = "Please enter the amount you would like to borrow: ";
-	private static String inputAnnualPercentageRatePrompt = "Please enter the annual percentage rate used to repay the loan: ";
-	private static String inputTermPrompt = "Please enter the term, in years, over which the loan is repaid: "; 
+	private static String INPUT_AMOUNT_TO_BORROW_PROMPT = "Please enter the amount you would like to borrow: ";
+	private static String INPUT_ANNUAL_PERCENTAGE_RATE_PROMPT = "Please enter the annual percentage rate used to repay the loan: ";
+	private static String INPUT_TERM_PROMPT = "Please enter the term, in years, over which the loan is repaid: "; 
 		
-	private static Console console = System.console();
+	private static Console CONSOLE = System.console();
 
 	private ArrayList<AmortizationPayment> paymentSchedules  = new ArrayList<AmortizationPayment>();
 	
@@ -28,9 +28,9 @@ public class AmortizationSchedule {
 	private double monthlyInterest = 0d;
 	private long monthlyPaymentAmount = 0;	// in cents
 
-	private static final double[] borrowAmountRange = new double[] { 0.01d, 1000000000000d };
-	private static final double[] aprRange = new double[] { 0.000001d, 100d };
-	private static final int[] termRange = new int[] { 1, 1000000 };
+	private static final double[] BORROW_AMOUNT_RANGE = new double[] { 0.01d, 1000000000000d };
+	private static final double[] ANNUAL_PERCENTAGE_RATE = new double[] { 0.000001d, 100d };
+	private static final int[] TERM_RANGE = new int[] { 1, 1000000 };
 	
 	// The output should include:
 	//	The first column identifies the payment number.
@@ -249,22 +249,22 @@ public class AmortizationSchedule {
 	}
 	
 	private static final double[] getBorrowAmountRange() {
-		return borrowAmountRange;
+		return BORROW_AMOUNT_RANGE;
 	}
 	
 	private static final double[] getAPRRange() {
-		return aprRange;
+		return ANNUAL_PERCENTAGE_RATE;
 	}
 
 	private static final int[] getTermRange() {
-		return termRange;
+		return TERM_RANGE;
 	}
 	
 	private static void printf(String formatString, Object... args) {
 		
 		try {
-			if (console != null) {
-				console.printf(formatString, args);
+			if (CONSOLE != null) {
+				CONSOLE.printf(formatString, args);
 			} else {
 				System.out.print(String.format(formatString, args));
 			}
@@ -280,8 +280,8 @@ public class AmortizationSchedule {
 	private static String readLine(String userPrompt) throws IOException {
 		String line = "";
 		
-		if (console != null) {
-			line = console.readLine(userPrompt);
+		if (CONSOLE != null) {
+			line = CONSOLE.readLine(userPrompt);
 		} else {
 			// print("console is null\n");
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
@@ -299,7 +299,7 @@ public class AmortizationSchedule {
 		double retval_amount = 0;
 		try {
 			do {
-				String amount = readLine( inputAmountToBorrowPrompt );
+				String amount = readLine( INPUT_AMOUNT_TO_BORROW_PROMPT );
 
 				if (isValidBorrowAmount(amount) == false) {
 						isValidAmount = false;
@@ -326,7 +326,7 @@ public class AmortizationSchedule {
 		double retval_apr = 0;
 		try {
 			do {
-				String apr = readLine( inputAnnualPercentageRatePrompt );
+				String apr = readLine( INPUT_ANNUAL_PERCENTAGE_RATE_PROMPT );
 				
 				if (isValidAPRValue(apr) == false) {
 					isValidAPR = false;
@@ -354,7 +354,7 @@ public class AmortizationSchedule {
 		int retval_term_years = 0;
 		try {
 			do {
-				String line = readLine( inputTermPrompt );
+				String line = readLine( INPUT_TERM_PROMPT );
 				
 				if (isValidTerm(line) == false) {
 					isValidTermYears = false;
