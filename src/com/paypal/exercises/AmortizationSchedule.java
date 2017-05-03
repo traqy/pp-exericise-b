@@ -211,6 +211,9 @@ public class AmortizationSchedule {
 		return TERM_RANGE;
 	}
 	
+	public ArrayList<AmortizationPayment> getAmortizationPaymentSchedules(){
+		return paymentSchedules;
+	}
 	class AmortizationPayment {
 		
 		private int paymentNumber;
@@ -220,7 +223,7 @@ public class AmortizationSchedule {
 		private long totalPayment;
 		private long totalInterestPaid;
 		
-		// Store the payment information data to ArrayList of HashMap
+		// Store the payment amortization schedule class object ArrayList
 		//    Payment Number, Monthly Payment Amount, Monthly Interest Balance, Total Payments, TotalInterestPaid
 
 		AmortizationPayment( int paymentNumber, long monthlyPaymentAmount, long monthlyInterest, long balance, long totalPayments, long totalInterestPaid) {
